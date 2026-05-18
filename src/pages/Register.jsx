@@ -7,7 +7,7 @@ function Register() {
   const navigate = useNavigate();
   const { login } = useAuth();
 
-  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "" });
+  const [form, setForm] = useState({ name: "", email: "", password: "", confirm: "", role: "member" });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
@@ -42,6 +42,7 @@ function Register() {
           name: form.name,
           email: form.email,
           password: form.password,
+          role: form.role,
         }),
       });
 
@@ -111,6 +112,27 @@ function Register() {
                   required
                   className="bg-transparent outline-none w-full text-sm text-white placeholder-gray-500"
                 />
+              </div>
+            </div>
+
+            {/* Role */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Account Type</label>
+              <div className="flex gap-3">
+                {["member", "admin"].map((r) => (
+                  <button
+                    key={r}
+                    type="button"
+                    onClick={() => setForm((p) => ({ ...p, role: r }))}
+                    className={`flex-1 py-3 rounded-2xl text-sm font-medium border transition-all duration-200 ${
+                      form.role === r
+                        ? "bg-violet-600 border-violet-500 text-white"
+                        : "bg-[#111C44] border-white/10 text-gray-400 hover:border-violet-500/50"
+                    }`}
+                  >
+                    {r === "admin" ? "👑 Family Admin" : "👤 Member"}
+                  </button>
+                ))}
               </div>
             </div>
 

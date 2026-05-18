@@ -8,6 +8,8 @@ import Transactions from "../components/Transactions";
 import BudgetPlanner from "../components/BudgetPlanner";
 import SavingsGoal from "../components/SavingsGoal";
 import AddTransaction from "../components/AddTransaction";
+import Analytics from "./Analytics";
+import AdminDashboard from "./AdminDashboard";
 import { useAuth } from "../context/AuthContext";
 
 import {
@@ -139,10 +141,19 @@ function Dashboard({ darkMode, setDarkMode }) {
       (sum, t) => sum + Math.abs(Number(t.amount)),
       0
     );
-    const savings  = Math.max(income - expenses, 0);
-    const balance  = income - expenses;
-    return { expenses, savings, balance };
-  }, [transactions, income]);
+    // Monthly goal savings = sum of all active goal monthly contributions
+    const monthlyGoalSavings = goals
+      .filter((g) => g.status !== "completed" && g.autoSaveEnabled !== false)
+      .reduce((sum, g) => sum + (g.monthlyMin || 0), 0);
+
+    // Savings card = separate future reserve (goal savings pool)
+    const savings = monthlyGoalSavings;
+
+    // Balance = income - expenses - monthly goal savings
+    const balance = income - expenses - monthlyGoalSavings;
+
+    return { expenses, savings, balance, monthlyGoalSavings };
+  }, [transactions, income, goals]);
 
   const fmt = (n) =>
     "₹" + Math.abs(n).toLocaleString("en-IN");
@@ -199,14 +210,14 @@ function Dashboard({ darkMode, setDarkMode }) {
               />
               <StatCard
                 darkMode={darkMode}
-                title="Savings"
+                title="Savings Reserve"
                 amount={fmt(stats.savings)}
                 color="bg-blue-500"
                 icon={PiggyBank}
                 subtitle={
-                  income > 0
-                    ? `${Math.round((stats.savings / income) * 100)}% of income`
-                    : "Set income to track"
+                  stats.monthlyGoalSavings > 0
+                    ? `₹${stats.monthlyGoalSavings.toLocaleString("en-IN")}/mo to goals`
+                    : "Set goals to track"
                 }
               />
               <StatCard
@@ -215,7 +226,7 @@ function Dashboard({ darkMode, setDarkMode }) {
                 amount={fmt(stats.balance)}
                 color={stats.balance >= 0 ? "bg-purple-500" : "bg-orange-500"}
                 icon={Landmark}
-                subtitle={stats.balance < 0 ? "Over budget" : "Available balance"}
+                subtitle={stats.balance < 0 ? "⚠️ Over budget" : "Income − Expenses − Goals"}
               />
             </div>
 
@@ -232,7 +243,7 @@ function Dashboard({ darkMode, setDarkMode }) {
                 transactions={transactions}
                 income={income}
               />
-              <SavingsGoal darkMode={darkMode} goals={goals} setGoals={setGoals} />
+              <SavingsGoal darkMode={darkMode} goals={goals} setGoals={setGoals} income={income} />
             </div>
           </>
         )}
@@ -282,7 +293,7 @@ function Dashboard({ darkMode, setDarkMode }) {
         {activePage === "goals" && (
           <div className="mt-8">
             <h1 className="text-3xl font-bold mb-6">Savings Goals</h1>
-            <SavingsGoal darkMode={darkMode} goals={goals} setGoals={setGoals} />
+            <SavingsGoal darkMode={darkMode} goals={goals} setGoals={setGoals} income={income} />
           </div>
         )}
 
@@ -307,6 +318,12 @@ function Dashboard({ darkMode, setDarkMode }) {
             />
           </div>
         )}
+
+        {/* ── ANALYTICS ── */}
+        {activePage === "analytics" && <Analytics darkMode={darkMode} />}
+
+        {/* ── FAMILY (admin only) ── */}
+        {activePage === "family" && <AdminDashboard darkMode={darkMode} />}
 
         {/* ── SETTINGS ── */}
         {activePage === "settings" && (

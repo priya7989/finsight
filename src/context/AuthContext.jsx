@@ -3,32 +3,18 @@ import { createContext, useContext, useState, useEffect } from "react";
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [token, setToken] = useState(() => localStorage.getItem("token"));
+  const [user,    setUser]    = useState(null);
+  const [token,   setToken]   = useState(() => localStorage.getItem("token"));
   const [loading, setLoading] = useState(true);
 
-  // On mount, verify token and load user
   useEffect(() => {
-    if (!token) {
-      setLoading(false);
-      return;
-    }
-
+    if (!token) { setLoading(false); return; }
     fetch("http://localhost:5000/auth/me", {
       headers: { Authorization: `Bearer ${token}` },
     })
-      .then((res) => {
-        if (!res.ok) throw new Error("Invalid token");
-        return res.json();
-      })
-      .then(({ user }) => {
-        setUser(user);
-      })
-      .catch(() => {
-        localStorage.removeItem("token");
-        setToken(null);
-        setUser(null);
-      })
+      .then((r) => { if (!r.ok) throw new Error(); return r.json(); })
+      .then(({ user }) => setUser(user))
+      .catch(() => { localStorage.removeItem("token"); setToken(null); setUser(null); })
       .finally(() => setLoading(false));
   }, [token]);
 
@@ -44,8 +30,10 @@ export function AuthProvider({ children }) {
     setUser(null);
   }
 
+  const isAdmin = user?.role === "admin";
+
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, loading, login, logout, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
