@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Pencil, Trash2, X, Clock, TrendingUp, AlertTriangle, PlusCircle, Pause } from "lucide-react";
 import AddGoal from "./AddGoal";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 const CATEGORY_ICONS = { "Education":"🎓","Child Future":"👶","Emergency":"🚨","Home":"🏠","Vehicle":"🚗","Retirement":"🌅","Medical":"🏥","Personal":"✨" };
 const STATUS_STYLE   = { pending:"bg-yellow-500/20 text-yellow-400","on-track":"bg-blue-500/20 text-blue-400",completed:"bg-green-500/20 text-green-400",paused:"bg-gray-500/20 text-gray-400" };
@@ -21,7 +23,7 @@ function EditGoalModal({ darkMode, goal, onClose, onSave, income }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res  = await fetch(`http://localhost:5000/goals/${goal._id}`, {
+      const res  = await fetch(`${API_URL}/goals/${goal._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: form.title, description: form.description, category: form.category, saved: Number(form.saved), months: Number(form.months), target: goal.target, autoSaveEnabled: form.autoSaveEnabled, income: income || undefined }),
@@ -116,7 +118,7 @@ function ContributeModal({ goal, onClose, onContributed }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res  = await fetch(`http://localhost:5000/goals/${goal._id}/contribute`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ amount: Number(amount) }) });
+      const res  = await fetch(`${API_URL}/goals/${goal._id}/contribute`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` }, body: JSON.stringify({ amount: Number(amount) }) });
       const data = await res.json();
       if (!res.ok) { setError(data.error || "Failed"); return; }
       onContributed(data.data);
@@ -158,7 +160,7 @@ function SavingsGoal({ darkMode, goals = [], setGoals, income = 0 }) {
   const activeGoals = goals.filter((g) => g.status !== "completed").length;
 
   async function deleteGoal(id) {
-    try { await fetch(`http://localhost:5000/goals/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); setGoals((prev) => prev.filter((g) => g._id !== id)); }
+    try { await fetch(`${API_URL}/goals/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } }); setGoals((prev) => prev.filter((g) => g._id !== id)); }
     catch (err) { console.error(err); }
   }
   function handleSave(u)        { setGoals((prev) => prev.map((g) => (g._id === u._id ? u : g))); setEditGoal(null); }

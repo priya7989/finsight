@@ -5,6 +5,8 @@ import {
   LineChart, Line,
 } from "recharts";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 import {
   Users, Trash2, UserPlus, X, ShoppingBag,
   ShieldOff, ShieldCheck, Target, Pencil, AlertTriangle, Check,
@@ -34,7 +36,7 @@ function InviteModal({ onClose, onAdded, token }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res  = await fetch("http://localhost:5000/family/invite", {
+      const res  = await fetch(`${API_URL}/family/invite`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(form),
@@ -79,7 +81,7 @@ function BlockModal({ member, onClose, onBlocked, token }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res  = await fetch(`http://localhost:5000/family/members/${member._id}/block`, {
+      const res  = await fetch(`${API_URL}/family/members/${member._id}/block`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ reason }),
@@ -143,7 +145,7 @@ function AssignGoalModal({ members, onClose, onAssigned, token }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res  = await fetch("http://localhost:5000/family/goals/assign", {
+      const res  = await fetch(`${API_URL}/family/goals/assign`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ ...form, target: Number(form.target), months: Number(form.months) }),
@@ -237,7 +239,7 @@ function EditGoalModal({ goal, onClose, onSaved, token }) {
   async function handleSubmit(e) {
     e.preventDefault(); setError(""); setLoading(true);
     try {
-      const res  = await fetch(`http://localhost:5000/family/goals/${goal._id}`, {
+      const res  = await fetch(`${API_URL}/family/goals/${goal._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: form.title, target: Number(form.target), months: Number(form.months), saved: Number(form.saved) }),
@@ -315,10 +317,10 @@ function AdminDashboard({ darkMode }) {
     setLoading(true);
     const h = { Authorization: `Bearer ${token}` };
     Promise.all([
-      fetch("http://localhost:5000/family/members",   { headers: h }).then(r => r.json()),
-      fetch("http://localhost:5000/family/analytics", { headers: h }).then(r => r.json()),
-      fetch("http://localhost:5000/family/expenses",  { headers: h }).then(r => r.json()),
-      fetch("http://localhost:5000/family/goals",     { headers: h }).then(r => r.json()),
+      fetch(`${API_URL}/family/members`,   { headers: h }).then(r => r.json()),
+      fetch(`${API_URL}/family/analytics`, { headers: h }).then(r => r.json()),
+      fetch(`${API_URL}/family/expenses`,  { headers: h }).then(r => r.json()),
+      fetch(`${API_URL}/family/goals`,     { headers: h }).then(r => r.json()),
     ])
       .then(([m, a, e, g]) => {
         setMembers(Array.isArray(m) ? m : []);
@@ -335,14 +337,14 @@ function AdminDashboard({ darkMode }) {
   async function removeMember(id) {
     if (!window.confirm("Remove this member permanently?")) return;
     try {
-      await fetch(`http://localhost:5000/family/members/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      await fetch(`${API_URL}/family/members/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setMembers(prev => prev.filter(m => m._id !== id));
     } catch (err) { console.error(err); }
   }
 
   async function unblockMember(id) {
     try {
-      const res  = await fetch(`http://localhost:5000/family/members/${id}/unblock`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+      const res  = await fetch(`${API_URL}/family/members/${id}/unblock`, { method: "POST", headers: { Authorization: `Bearer ${token}` } });
       const data = await res.json();
       if (res.ok) setMembers(prev => prev.map(m => m._id === id ? { ...m, isBlocked: false, blockReason: "" } : m));
     } catch (err) { console.error(err); }

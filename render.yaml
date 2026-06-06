@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: finsight-backend
+    env: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    envVars:
+      - key: MONGO_URI
+        sync: false
+        description: MongoDB Connection String (e.g. mongodb+srv://...)
+      - key: JWT_SECRET
+        sync: false
+        description: Secret key used to sign JWTs
+      - key: PORT
+        value: 5000

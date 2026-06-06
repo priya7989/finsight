@@ -1,6 +1,8 @@
 import { useState, useMemo } from "react";
 import { X, AlertTriangle, Info } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 const GOAL_CATEGORIES = [
   { label: "Education",    icon: "🎓", value: "Education"    },
@@ -44,7 +46,7 @@ function AddGoal({ darkMode, setShowGoalForm, goals, setGoals, income = 0 }) {
     if (goals.filter((g) => g.status !== "completed").length >= 5) { setError("Maximum 5 active goals allowed."); return; }
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:5000/goals", {
+      const res  = await fetch(`${API_URL}/goals`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title: form.title, description: form.description, category: form.category, target: Number(form.target), saved: Number(form.saved) || 0, months: Number(form.months) || 12, income: income || undefined }),

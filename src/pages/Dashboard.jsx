@@ -12,6 +12,8 @@ import Analytics from "./Analytics";
 import AdminDashboard from "./AdminDashboard";
 import ProfileSettings from "./ProfileSettings";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 import {
   Wallet,
@@ -108,7 +110,7 @@ function Dashboard({ darkMode }) {
 
   // Fetch Transactions
   useEffect(() => {
-    fetch("http://localhost:5000/transactions", {
+    fetch(`${API_URL}/transactions`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
@@ -118,7 +120,7 @@ function Dashboard({ darkMode }) {
 
   // Fetch Goals
   useEffect(() => {
-    fetch("http://localhost:5000/goals", {
+    fetch(`${API_URL}/goals`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())

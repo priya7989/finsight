@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, TrendingUp, ShieldOff, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 // ── Blocked Modal ─────────────────────────────────────────
 function BlockedModal({ reason, blockedAt, onClose }) {
@@ -64,7 +66,7 @@ function Login() {
     setError("");
 
     try {
-      const res  = await fetch("http://localhost:5000/auth/login", {
+      const res  = await fetch(`${API_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(form),

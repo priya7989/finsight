@@ -2,6 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff, User, TrendingUp } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 function Register() {
   const navigate = useNavigate();
@@ -35,7 +37,7 @@ function Register() {
     setLoading(true);
 
     try {
-      const res = await fetch("http://localhost:5000/auth/register", {
+      const res = await fetch(`${API_URL}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

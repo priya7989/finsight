@@ -1,6 +1,8 @@
 import { useState, useRef } from "react";
 import { User, Mail, Lock, Palette, Eye, EyeOff, Check, Camera, LogOut, Shield, Clock } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 import { useTheme, THEMES } from "../context/ThemeContext";
 
 // ── Reusable input ────────────────────────────────────────
@@ -47,7 +49,7 @@ function ThemePicker({ darkMode }) {
   async function saveToServer(key, accent) {
     setSaving(true);
     try {
-      const res = await fetch("http://localhost:5000/auth/profile", {
+      const res = await fetch(`${API_URL}/auth/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ theme: key, accentColor: accent || accentColor }),
@@ -159,7 +161,7 @@ function ProfileInfo({ darkMode }) {
     setMsg({ type: "", text: "" });
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:5000/auth/profile", {
+      const res  = await fetch(`${API_URL}/auth/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ name: form.name, email: form.email, avatar }),
@@ -250,7 +252,7 @@ function ChangePassword({ darkMode }) {
     if (form.next.length < 6)       { setMsg({ type: "error", text: "Password must be at least 6 characters" }); return; }
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:5000/auth/password", {
+      const res  = await fetch(`${API_URL}/auth/password`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ currentPassword: form.current, newPassword: form.next }),

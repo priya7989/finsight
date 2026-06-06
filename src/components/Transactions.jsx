@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { ShoppingBag, Utensils, Car, Tv, Trash2 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 const getIcon = (cat) => ({ Shopping: ShoppingBag, Food: Utensils, Travel: Car }[cat] || Tv);
 const getColor = (cat) => ({ Shopping: "bg-pink-500", Food: "bg-orange-500", Travel: "bg-blue-500" }[cat] || "bg-red-500");
@@ -11,7 +13,7 @@ function Transactions({ darkMode, transactions, setTransactions }) {
 
   async function deleteTransaction(id) {
     try {
-      await fetch(`http://localhost:5000/transactions/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+      await fetch(`${API_URL}/transactions/${id}`, { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
       setTransactions((prev) => prev.filter((t) => t._id !== id));
     } catch (err) { console.error(err); }
   }

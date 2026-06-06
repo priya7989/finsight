@@ -1,5 +1,7 @@
 import { Bell, Search, Palette } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 import { useTheme, THEMES } from "../context/ThemeContext";
 import { useState } from "react";
 
@@ -11,7 +13,7 @@ function ThemeQuickPicker({ onClose }) {
     switchTheme(key);
     onClose();
     try {
-      const res = await fetch("http://localhost:5000/auth/profile", {
+      const res = await fetch(`${API_URL}/auth/profile`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${authToken}` },
         body: JSON.stringify({ theme: key }),

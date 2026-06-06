@@ -5,6 +5,8 @@ import {
   AreaChart, Area, ComposedChart, Legend,
 } from "recharts";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 import { Heart, TrendingUp, TrendingDown, Target, AlertTriangle, CheckCircle, Clock, Zap } from "lucide-react";
 
 const COLORS = ["#8B5CF6", "#3B82F6", "#F59E0B", "#EF4444", "#10B981", "#EC4899"];
@@ -177,7 +179,7 @@ function Analytics({ darkMode, income = 0 }) {
   const [tab,     setTab]     = useState("monthly");
 
   useEffect(() => {
-    const url = `http://localhost:5000/analytics/user${income > 0 ? `?income=${income}` : ""}`;
+    const url = `${API_URL}/analytics/user${income > 0 ? `?income=${income}` : ""}`;
     fetch(url, { headers: { Authorization: `Bearer ${token}` } })
       .then((r) => r.json())
       .then(setData)

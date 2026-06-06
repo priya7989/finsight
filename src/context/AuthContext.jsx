@@ -1,4 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
+import { API_URL } from "../config";
+
 
 const AuthContext = createContext(null);
 
@@ -9,7 +11,7 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     if (!token) { setLoading(false); return; }
-    fetch("http://localhost:5000/auth/me", {
+    fetch(`${API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((r) => { if (!r.ok) throw new Error(); return r.json(); })

@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
+import { API_URL } from "../config";
+
 
 const CATEGORIES = ["Shopping", "Food", "Travel", "Entertainment"];
 
@@ -21,7 +23,7 @@ function AddTransaction({ darkMode, setShowForm, transactions, setTransactions }
     e.preventDefault();
     setLoading(true);
     try {
-      const res  = await fetch("http://localhost:5000/transactions", {
+      const res  = await fetch(`${API_URL}/transactions`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ title, amount, category, source: "manual" }),
