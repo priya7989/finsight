@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import {
-  LineChart, Line, BarChart, Bar, PieChart, Pie, Cell,
+  BarChart, Bar, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   AreaChart, Area, ComposedChart, Legend,
 } from "recharts";
@@ -8,6 +8,8 @@ import { useAuth } from "../context/AuthContext";
 import { Heart, TrendingUp, TrendingDown, Target, AlertTriangle, CheckCircle, Clock, Zap } from "lucide-react";
 
 const COLORS = ["#8B5CF6", "#3B82F6", "#F59E0B", "#EF4444", "#10B981", "#EC4899"];
+const CAT_COLORS = { Food: "#F59E0B", Travel: "#3B82F6", Shopping: "#EC4899", Entertainment: "#EF4444", Other: "#10B981" };
+const getCatColor = (name, i) => CAT_COLORS[name] || COLORS[i % COLORS.length];
 
 const CATEGORY_ICONS = {
   "Education": "🎓", "Child Future": "👶", "Emergency": "🚨",
@@ -210,11 +212,18 @@ function Analytics({ darkMode, income = 0 }) {
   const activeGoals  = (data.goals || []).filter((g) => g.status !== "completed").length;
   const completedGoals = (data.goals || []).filter((g) => g.status === "completed").length;
 
-  const chartData = tab === "daily"
-    ? data.daily.map((d) => ({ name: d.date.slice(5), amount: d.amount }))
-    : tab === "weekly"
-    ? data.weekly.map((d) => ({ name: d.week, amount: d.amount }))
-    : data.monthly.map((d) => ({ name: d.month, amount: d.amount }));
+  // Build chart data depending on tab
+  // For daily: use category-stacked bar; for weekly/monthly: area chart
+  const allCats = [...new Set((data.daily || []).flatMap((d) => (d.categories || []).map((c) => c.name)))];
+
+  const dailyChartData = (data.daily || []).map((d) => {
+    const row = { name: d.date.slice(5), total: d.amount, count: d.count, _raw: d };
+    (d.categories || []).forEach((c) => { row[c.name] = c.amount; });
+    return row;
+  });
+
+  const weeklyChartData = (data.weekly || []).map((d) => ({ name: d.week, amount: d.amount }));
+  const monthlyChartData = (data.monthly || []).map((d) => ({ name: d.month, amount: d.amount }));
 
   return (
     <div className="mt-8 space-y-6">
@@ -256,27 +265,66 @@ function Analytics({ darkMode, income = 0 }) {
         <FinancialFlowCard flow={data.financialFlow} darkMode={darkMode} />
       </div>
 
-      {/* Time-series chart */}
+      {/* Time-series chart — daily stacked by category, weekly/monthly area */}
       <ChartCard
         darkMode={darkMode}
-        title={tab === "daily" ? "Daily Spending (Last 30 Days)" : tab === "weekly" ? "Weekly Spending (Last 8 Weeks)" : "Monthly Spending (Last 6 Months)"}
-        subtitle="Tap a bar or point for details"
+        title={tab === "daily" ? "Daily Spending — Category Breakdown (Last 30 Days)" : tab === "weekly" ? "Weekly Spending (Last 8 Weeks)" : "Monthly Spending (Last 6 Months)"}
+        subtitle={tab === "daily" ? "Hover a bar to see category breakdown" : "Tap a point for details"}
       >
         <div className="h-64">
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%"  stopColor="#8B5CF6" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}   />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
-              <XAxis dataKey="name" tick={tickStyle} />
-              <YAxis tick={tickStyle} tickFormatter={fmtY} />
-              <Tooltip {...tooltipStyle} formatter={(v) => [`₹${v.toLocaleString()}`, "Spent"]} />
-              <Area type="monotone" dataKey="amount" stroke="#8B5CF6" strokeWidth={2} fill="url(#spendGrad)" dot={{ fill: "#8B5CF6", r: 3 }} activeDot={{ r: 6 }} />
-            </AreaChart>
+            {tab === "daily" ? (
+              <BarChart data={dailyChartData} barSize={18}>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="name" tick={tickStyle} />
+                <YAxis tick={tickStyle} tickFormatter={fmtY} />
+                <Tooltip
+                  {...tooltipStyle}
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
+                    const raw = payload[0]?.payload?._raw;
+                    return (
+                      <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: 12, padding: "10px 14px", minWidth: 180 }}>
+                        <p style={{ color: "var(--text-primary)", fontWeight: 600, marginBottom: 6 }}>{label}</p>
+                        <p style={{ color: "#EF4444", fontSize: 12, marginBottom: 4 }}>
+                          Total: ₹{(raw?.amount || 0).toLocaleString("en-IN")} · {raw?.count || 0} txn{raw?.count !== 1 ? "s" : ""}
+                        </p>
+                        {(raw?.categories || []).map((c, i) => (
+                          <div key={c.name} style={{ display: "flex", justifyContent: "space-between", gap: 12, fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>
+                            <span style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                              <span style={{ width: 8, height: 8, borderRadius: "50%", background: getCatColor(c.name, i), display: "inline-block" }} />
+                              {c.name}
+                            </span>
+                            <span style={{ color: "var(--text-primary)", fontWeight: 500 }}>₹{c.amount.toLocaleString("en-IN")}</span>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  }}
+                />
+                <Legend wrapperStyle={{ fontSize: 11, color: darkMode ? "#9CA3AF" : "#6B7280" }} />
+                {allCats.length > 0
+                  ? allCats.map((cat, i) => (
+                      <Bar key={cat} dataKey={cat} stackId="a" fill={getCatColor(cat, i)} radius={i === allCats.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]} />
+                    ))
+                  : <Bar dataKey="total" fill="#8B5CF6" radius={[4, 4, 0, 0]} />
+                }
+              </BarChart>
+            ) : (
+              <AreaChart data={tab === "weekly" ? weeklyChartData : monthlyChartData}>
+                <defs>
+                  <linearGradient id="spendGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%"  stopColor="#8B5CF6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8B5CF6" stopOpacity={0}   />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke={gridStroke} />
+                <XAxis dataKey="name" tick={tickStyle} />
+                <YAxis tick={tickStyle} tickFormatter={fmtY} />
+                <Tooltip {...tooltipStyle} formatter={(v) => [`₹${v.toLocaleString()}`, "Spent"]} />
+                <Area type="monotone" dataKey="amount" stroke="#8B5CF6" strokeWidth={2} fill="url(#spendGrad)" dot={{ fill: "#8B5CF6", r: 3 }} activeDot={{ r: 6 }} />
+              </AreaChart>
+            )}
           </ResponsiveContainer>
         </div>
       </ChartCard>

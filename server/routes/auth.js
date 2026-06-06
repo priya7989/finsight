@@ -20,6 +20,8 @@ function safeUser(u) {
     avatar:        u.avatar || "",
     theme:         u.theme  || "default",
     accentColor:   u.accentColor || "#8B5CF6",
+    isBlocked:     u.isBlocked   || false,
+    blockReason:   u.blockReason || "",
   };
 }
 
@@ -47,6 +49,15 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ error: "Invalid email or password" });
+    }
+    // Block check — stop JWT generation for blocked users
+    if (user.isBlocked) {
+      return res.status(403).json({
+        error: "blocked",
+        message: `Your account has been blocked. Reason: ${user.blockReason || "Policy violation"}`,
+        blockReason: user.blockReason || "Policy violation",
+        blockedAt: user.blockedAt,
+      });
     }
     res.json({ token: makeToken(user), user: safeUser(user) });
   } catch (err) {

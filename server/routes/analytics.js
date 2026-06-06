@@ -120,10 +120,20 @@ router.get("/user", async (req, res) => {
     const sixMonthsAgo  = new Date(); sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
     const [daily, weekly, monthly, byCategory, goals, allTransactions] = await Promise.all([
+      // Daily with category breakdown
       Transaction.aggregate([
         { $match: { userId: oid, createdAt: { $gte: thirtyDaysAgo } } },
-        { $group: { _id: { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }, total: { $sum: "$amount" }, count: { $sum: 1 } } },
-        { $sort: { _id: 1 } },
+        {
+          $group: {
+            _id: {
+              date:     { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
+              category: "$category",
+            },
+            total: { $sum: "$amount" },
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { "_id.date": 1 } },
       ]),
       Transaction.aggregate([
         { $match: { userId: oid, createdAt: { $gte: eightWeeksAgo } } },
@@ -142,6 +152,17 @@ router.get("/user", async (req, res) => {
       Goal.find({ userId: req.userId }),
       Transaction.find({ userId: req.userId }),
     ]);
+
+    // Reshape daily: group by date, collect categories
+    const dailyMap = {};
+    daily.forEach(({ _id, total, count }) => {
+      const { date, category } = _id;
+      if (!dailyMap[date]) dailyMap[date] = { date, amount: 0, count: 0, categories: [] };
+      dailyMap[date].amount += Math.abs(total);
+      dailyMap[date].count  += count;
+      dailyMap[date].categories.push({ name: category, amount: Math.abs(total), count });
+    });
+    const dailyFormatted = Object.values(dailyMap).sort((a, b) => a.date.localeCompare(b.date));
 
     const totalExpenses      = allTransactions.reduce((s, t) => s + Math.abs(Number(t.amount)), 0);
     const monthlyGoalSavings = goals
@@ -175,7 +196,7 @@ router.get("/user", async (req, res) => {
     };
 
     res.json({
-      daily:      daily.map((x) => ({ date: x._id, amount: Math.abs(x.total), count: x.count })),
+      daily:      dailyFormatted,
       weekly:     weekly.map((x) => ({ week: `W${x._id}`, amount: Math.abs(x.total) })),
       monthly:    monthlyData,
       byCategory: byCategory.map((x) => ({ name: x._id, value: Math.abs(x.total), count: x.count })),

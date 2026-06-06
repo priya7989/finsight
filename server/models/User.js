@@ -1,19 +1,25 @@
 const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+const bcrypt   = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
-    name:     { type: String, required: true, trim: true },
-    email:    { type: String, required: true, unique: true, lowercase: true, trim: true },
-    password: { type: String, required: true, minlength: 6 },
+    name:          { type: String, required: true, trim: true },
+    email:         { type: String, required: true, unique: true, lowercase: true, trim: true },
+    password:      { type: String, required: true, minlength: 6 },
     role:          { type: String, enum: ["admin", "member"], default: "member" },
     familyId:      { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     linkedAdminId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
 
     // Profile & personalization
-    avatar:      { type: String, default: "" },          // base64 or URL
-    theme:       { type: String, default: "default" },   // theme key
-    accentColor: { type: String, default: "#8B5CF6" },   // hex
+    avatar:      { type: String, default: "" },
+    theme:       { type: String, default: "default" },
+    accentColor: { type: String, default: "#8B5CF6" },
+
+    // Blocking system
+    isBlocked:   { type: Boolean, default: false },
+    blockReason: { type: String,  default: "" },
+    blockedAt:   { type: Date,    default: null },
+    blockedBy:   { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
   },
   { timestamps: true }
 );
